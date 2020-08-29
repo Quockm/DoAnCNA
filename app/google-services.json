@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1068988858641",
+    "firebase_url": "https://doancna-6dc08.firebaseio.com",
+    "project_id": "doancna-6dc08",
+    "storage_bucket": "doancna-6dc08.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1068988858641:android:3f8e9b393fad1925600cb0",
+        "android_client_info": {
+          "package_name": "com.example.doancna"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1068988858641-u3mjk5his0elr5b2suegrs26srb8m47p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8QQ3E1lRj6R68bk2JKNTWWZf3FKbYcvc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1068988858641-u3mjk5his0elr5b2suegrs26srb8m47p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
