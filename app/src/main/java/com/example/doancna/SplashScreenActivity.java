@@ -106,9 +106,9 @@ public class SplashScreenActivity extends AppCompatActivity {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.exists()) {
-                            Toast.makeText(SplashScreenActivity.this, "User already register", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(SplashScreenActivity.this, "User already register", Toast.LENGTH_SHORT).show();
                             DriverInfoModel driverInfoModel = snapshot.getValue(DriverInfoModel.class);
-//                            gotoHomeActivity(driverInfoModel);
+                            gotoHomeActivity(driverInfoModel);
                         } else {
                             showRegisterLayout();
                         }
@@ -120,6 +120,12 @@ public class SplashScreenActivity extends AppCompatActivity {
                         Toast.makeText(SplashScreenActivity.this, "" + error.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void gotoHomeActivity(DriverInfoModel driverInfoModel) {
+        Common.currentUser = driverInfoModel; //Init value
+        startActivity(new Intent(SplashScreenActivity.this, DriverHomeActivity.class));
+        finish();
     }
 
     private void showRegisterLayout() {
@@ -168,9 +174,9 @@ public class SplashScreenActivity extends AppCompatActivity {
                             Toast.makeText(SplashScreenActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                         })
                         .addOnSuccessListener(aVoid -> {
-                            Toast.makeText(this, "Register Succefully", Toast.LENGTH_SHORT).show();
-//                            dialog.dismiss();
-//                            gotoHomeActivity(model);
+                            //Toast.makeText(this, "Register Succefully", Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
+                            gotoHomeActivity(model);
                         });
             }
         });
@@ -202,7 +208,7 @@ public class SplashScreenActivity extends AppCompatActivity {
                 );
     }
 
-    public void onActivityResult(int requestCode,int resultCode,@Nullable Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == LOGIN_REQUEST_CODE) {
             IdpResponse response = IdpResponse.fromResultIntent(data);
