@@ -21,7 +21,10 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
+import com.example.doancna.Common;
 import com.example.doancna.R;
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -34,6 +37,13 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -54,10 +64,40 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
 
+    //Online system
+    DatabaseReference onlineRef, currentUserRef, driversLocationRef;
+    GeoFire geoFire;
+    ValueEventListener onlineValueListener = new ValueEventListener() {
+
+        @Override
+        public void onDataChange(@NonNull DataSnapshot snapshot) {
+            if (snapshot.exists())
+                currentUserRef.onDisconnect().removeValue();
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError error) {
+            Snackbar.make(mapFragment.getView(), error.getMessage(), Snackbar.LENGTH_LONG)
+                    .show();
+        }
+    };
+
     @Override
     public void onDestroy() {
         fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+        geoFire.removeLocation(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
         super.onDestroy();
+    }
+
+    @Override
+    public void onResume() {
+        registerOnlineSystem();
+        super.onResume();
+    }
+
+    private void registerOnlineSystem() {
+        onlineRef.addValueEventListener(onlineValueListener);
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -74,6 +114,14 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private void init() {
 
+        onlineRef = FirebaseDatabase.getInstance().getReference().child(".info/connected");
+        driversLocationRef = FirebaseDatabase.getInstance().getReference(Common.DRIVER_LOCATION_REFERENCE);
+        currentUserRef = FirebaseDatabase.getInstance().getReference(Common.DRIVER_LOCATION_REFERENCE)
+                .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        geoFire = new GeoFire(driversLocationRef);
+
+        registerOnlineSystem();
+
         locationRequest = new LocationRequest();
         locationRequest.setSmallestDisplacement(10f);
         locationRequest.setInterval(5000);
@@ -88,11 +136,31 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 LatLng newPosition = new LatLng(locationResult.getLastLocation().getLatitude()
                         , locationResult.getLastLocation().getLongitude());
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newPosition, 18f));
+
+                //update Location
+                geoFire.setLocation(FirebaseAuth.getInstance().getCurrentUser().getUid(),
+                        new GeoLocation(locationResult.getLastLocation().getLatitude(),
+                                locationResult.getLastLocation().getLongitude()),
+                        (key, error) -> {
+                            if (error != null)
+                                Snackbar.make(mapFragment.getView(), error.getMessage(), Snackbar.LENGTH_LONG)
+                                        .show();
+                            else
+                                Snackbar.make(mapFragment.getView(), "You're Online", Snackbar.LENGTH_LONG)
+                                        .show();
+
+                        });
             }
         };
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getContext());
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(
+
+                getContext());
+        if (ActivityCompat.checkSelfPermission(
+
+                getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(
+
+                getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
