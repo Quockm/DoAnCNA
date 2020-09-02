@@ -67,4 +67,7 @@ dependencies {
     //GeoFire
     implementation 'com.firebase:geofire-java:3.0.0'
 
+    //CicrleimageView
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+
 }
