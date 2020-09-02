@@ -1,36 +1,53 @@
 package com.example.doancna;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.view.MenuItem;
-import android.view.View;
+import android.text.TextUtils;
 import android.view.Menu;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.navigation.NavigationView;
-import com.google.firebase.auth.FirebaseAuth;
-
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+
+import com.bumptech.glide.Glide;
+import com.example.doancna.Utils.UserUtils;
+import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class DriverHomeActivity extends AppCompatActivity {
 
+    private static final int PICK_IMAGE_REQUEST = 1919;
     private AppBarConfiguration mAppBarConfiguration;
 
     private DrawerLayout drawer;
     private NavigationView navigationView;
     private NavController navController;
+
+    private AlertDialog waitingDialog;
+    private StorageReference storageReference;
+
+    private Uri imageuri;
+
+    private ImageView img_avatar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,54 +56,121 @@ public class DriverHomeActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_view);
+        drawer = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_home)
                 .setDrawerLayout(drawer)
                 .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                if (item.getItemId() == R.id.nav_sign_out) {
-                    Context context;
-                    AlertDialog.Builder builder = new AlertDialog.Builder(DriverHomeActivity.this);
-                    builder.setTitle("Sign Out")
-                            .setMessage("Do you want to sign out!!")
-                            .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    dialogInterface.dismiss();
-                                }
-                            })
-                            .setPositiveButton("SIGN OUT", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    FirebaseAuth.getInstance().signOut();
-                                    Intent intent = new Intent(DriverHomeActivity.this, SplashScreenActivity.class);
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                    startActivity(intent);
-                                    finish();
-                                }
-                            })
-                            .setCancelable(false);
-                    AlertDialog dialog = builder.create();
-                    dialog.setOnShowListener(dialogInterface -> {
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                                .setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                                .setTextColor(getResources().getColor(R.color.colorAccent));
 
-                    });
-                    dialog.show();
-                }
-                return true;
+        init();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
+            if (data != null && data.getData() != null) {
+                imageuri = data.getData();
+                img_avatar.setImageURI(imageuri);
+
+                showDialogUpload();
             }
+        }
+    }
+
+    private void showDialogUpload() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(DriverHomeActivity.this);
+        builder.setTitle("Change Avatar")
+                .setMessage("Do you want to change your avatar?")
+                .setNegativeButton("CANCEL", (dialogInterface, i) -> dialogInterface.dismiss())
+                .setPositiveButton("UPLOAD", (dialogInterface, i) -> {
+                    if (imageuri != null) {
+                        waitingDialog.setMessage("Uploading....");
+                        waitingDialog.show();
+
+                        String unique_name = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                        StorageReference avatarFolder = storageReference.child("avatars/" + unique_name);
+
+                        avatarFolder.putFile(imageuri)
+                                .addOnFailureListener(e -> {
+                                    waitingDialog.dismiss();
+                                    Snackbar.make(drawer, e.getMessage(), Snackbar.LENGTH_SHORT).show();
+                                }).addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                avatarFolder.getDownloadUrl().addOnSuccessListener(uri -> {
+                                    Map<String, Object> updateData = new HashMap<>();
+                                    updateData.put("avatar", uri.toString());
+
+                                    UserUtils.updateUser(drawer, updateData);
+                                });
+                                waitingDialog.dismiss();
+                            }
+                        }).addOnProgressListener(snapshot -> {
+                            double progress = (100.0 * snapshot.getTotalByteCount() / snapshot.getTotalByteCount());
+                            waitingDialog.setMessage(new StringBuilder("Uploading: ").append(progress).append("%"));
+                        });
+                    }
+                })
+                .setCancelable(false);
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(dialogInterface -> {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    .setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                    .setTextColor(getResources().getColor(R.color.colorAccent));
+
+        });
+        dialog.show();
+    }
+
+    private void init() {
+        waitingDialog = new AlertDialog.Builder(this)
+                .setCancelable(false)
+                .setMessage("Waiting.....")
+                .create();
+
+        storageReference = FirebaseStorage.getInstance().getReference();
+
+        navigationView.setNavigationItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.nav_sign_out) {
+                Context context;
+                AlertDialog.Builder builder = new AlertDialog.Builder(DriverHomeActivity.this);
+                builder.setTitle("Sign Out")
+                        .setMessage("Do you want to sign out!!")
+                        .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                            }
+                        })
+                        .setPositiveButton("SIGN OUT", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                FirebaseAuth.getInstance().signOut();
+                                Intent intent = new Intent(DriverHomeActivity.this, SplashScreenActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+                                finish();
+                            }
+                        })
+                        .setCancelable(false);
+                AlertDialog dialog = builder.create();
+                dialog.setOnShowListener(dialogInterface -> {
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                            .setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                            .setTextColor(getResources().getColor(R.color.colorAccent));
+
+                });
+                dialog.show();
+            }
+            return true;
         });
 
         // set data for user
@@ -94,10 +178,28 @@ public class DriverHomeActivity extends AppCompatActivity {
         TextView txt_name = (TextView) headerView.findViewById(R.id.txt_name);
         TextView txt_phonenumber = (TextView) headerView.findViewById(R.id.txt_phonenumber);
         TextView txt_star = (TextView) headerView.findViewById(R.id.txt_star);
+        img_avatar = (ImageView) headerView.findViewById(R.id.img_avatar);
 
         txt_name.setText(Common.buildWelcomeMessage());
         txt_phonenumber.setText(Common.currentUser != null ? Common.currentUser.getPhonenumber() : "");
         txt_star.setText(Common.currentUser != null ? String.valueOf(Common.currentUser.getRating()) : "0.0");
+        img_avatar.setOnClickListener(view -> {
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(intent, PICK_IMAGE_REQUEST);
+        });
+        if (Common.currentUser != null && Common.currentUser.getAvatar() != null &&
+                !TextUtils.isEmpty(Common.currentUser.getAvatar())) ;
+
+        {
+            //Glide to add img_avatar
+            Glide
+                    .with(this)
+                    .load(Common.currentUser.getAvatar())
+                    .into(img_avatar);
+
+        }
     }
 
 

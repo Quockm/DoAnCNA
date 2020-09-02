@@ -114,7 +114,6 @@ public class SplashScreenActivity extends AppCompatActivity {
                         }
 
                     }
-
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         Toast.makeText(SplashScreenActivity.this, "" + error.getMessage(), Toast.LENGTH_SHORT).show();

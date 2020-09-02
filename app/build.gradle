@@ -6,6 +6,7 @@ android {
     buildToolsVersion "30.0.2"
 
     defaultConfig {
+        multiDexEnabled true
         applicationId "com.example.doancna"
         minSdkVersion 16
         targetSdkVersion 30
@@ -69,5 +70,17 @@ dependencies {
 
     //CicrleimageView
     implementation 'de.hdodenhof:circleimageview:3.1.0'
+
+    //Glide
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
+
+    //firebase:firebase-storage
+    implementation 'com.google.firebase:firebase-storage:19.2.0'
+
+    //Fixed
+    implementation 'com.android.support:multidex:1.0.3'
+
+
 
 }
