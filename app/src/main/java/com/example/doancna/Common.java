@@ -12,7 +12,7 @@ import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
 
-import com.example.doancna.Model.DriverInfoModel;
+import com.example.doancna.model.DriverInfoModel;
 
 public class Common {
     public static final String DRIVER_INFO_REFERENCE = "DriverInfo";

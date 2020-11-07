@@ -1,4 +1,4 @@
-package com.example.doancna.Model;
+package com.example.doancna.model;
 
 public class DriverInfoModel {
     private String fisrtnasme, lastname, phonenumber, avatar;

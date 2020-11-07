@@ -1,17 +1,11 @@
-package com.example.doancna.Utils;
+package com.example.doancna.utils;
 
 import android.content.Context;
 import android.view.View;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.drawerlayout.widget.DrawerLayout;
-
 import com.example.doancna.Common;
-import com.example.doancna.Model.TokenModel;
-import com.example.doancna.Service.FirebaseMessagingService;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.example.doancna.model.TokenModel;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;

@@ -1,9 +1,9 @@
-package com.example.doancna.Service;
+package com.example.doancna.service;
 
 import androidx.annotation.NonNull;
 
 import com.example.doancna.Common;
-import com.example.doancna.Utils.UserUtils;
+import com.example.doancna.utils.UserUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.messaging.RemoteMessage;
 

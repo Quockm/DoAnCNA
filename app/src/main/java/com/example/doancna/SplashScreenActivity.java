@@ -16,13 +16,11 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.example.doancna.Model.DriverInfoModel;
-import com.example.doancna.Utils.UserUtils;
+import com.example.doancna.model.DriverInfoModel;
+import com.example.doancna.utils.UserUtils;
 import com.firebase.ui.auth.AuthMethodPickerLayout;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -32,7 +30,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
 
 import java.util.Arrays;
 import java.util.List;
@@ -107,7 +104,7 @@ public class SplashScreenActivity extends AppCompatActivity {
                         });
                 checkUserFromFirebase();
                 Toast.makeText(SplashScreenActivity.this, "Welcome:" + FirebaseAuth.getInstance().getCurrentUser().getUid(), Toast.LENGTH_LONG).show(); // change the toast
-                //delaySplashScreen();
+                delaySplashScreen();
             } else
                 showLoginLayout();
         };
